@@ -11,6 +11,7 @@ export * from "./config.types";
 export * from "./contact.types";
 export * from "./enterprise.types";
 export * from "./flagged-audio.types";
+export * from "./global-dictionary.types";
 export * from "./hotkey.types";
 export * from "./llm-provider.types";
 export * from "./member.types";

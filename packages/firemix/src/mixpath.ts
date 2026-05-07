@@ -1,6 +1,7 @@
 import { FiremixPath } from "@firemix/core";
 import {
   Contact,
+  DatabaseGlobalDictionary,
   DatabaseMember,
   DatabaseTenant,
   DatabaseTenantInvitation,
@@ -66,5 +67,11 @@ export const tenantInvitations = (
   invitationId?: Nullable<string>,
 ): FiremixPath<DatabaseTenantInvitation> => {
   return ["tenant_invitations", ...listify(invitationId)];
+};
+
+export const globalDictionaries = (
+  tenantId?: Nullable<string>,
+): FiremixPath<DatabaseGlobalDictionary> => {
+  return ["globalDictionaries", ...listify(tenantId)];
 };
 

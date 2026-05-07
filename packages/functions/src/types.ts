@@ -551,6 +551,24 @@ type HandlerDefinitions = {
     input: { token: string };
     output: { tenantId: string };
   };
+
+  // global dictionary (per-tenant set of vocabulary terms)
+  "globalDictionary/list": {
+    input: { tenantId: string };
+    output: { tenantId: string; terms: string[] };
+  };
+  "globalDictionary/add": {
+    input: { tenantId: string; term: string };
+    output: EmptyObject;
+  };
+  "globalDictionary/update": {
+    input: { tenantId: string; oldTerm: string; newTerm: string };
+    output: EmptyObject;
+  };
+  "globalDictionary/remove": {
+    input: { tenantId: string; term: string };
+    output: EmptyObject;
+  };
 };
 
 export type HandlerName = keyof HandlerDefinitions;
@@ -880,6 +898,35 @@ export const InvitationAcceptInputZod = z
     token: z.string().min(1),
   })
   .strict() satisfies z.ZodType<HandlerInput<"invitation/accept">>;
+
+// global dictionary
+export const GlobalDictionaryListInputZod = z
+  .object({
+    tenantId: z.string().min(1),
+  })
+  .strict() satisfies z.ZodType<HandlerInput<"globalDictionary/list">>;
+
+export const GlobalDictionaryAddInputZod = z
+  .object({
+    tenantId: z.string().min(1),
+    term: z.string().trim().min(1),
+  })
+  .strict() satisfies z.ZodType<HandlerInput<"globalDictionary/add">>;
+
+export const GlobalDictionaryUpdateInputZod = z
+  .object({
+    tenantId: z.string().min(1),
+    oldTerm: z.string().trim().min(1),
+    newTerm: z.string().trim().min(1),
+  })
+  .strict() satisfies z.ZodType<HandlerInput<"globalDictionary/update">>;
+
+export const GlobalDictionaryRemoveInputZod = z
+  .object({
+    tenantId: z.string().min(1),
+    term: z.string().trim().min(1),
+  })
+  .strict() satisfies z.ZodType<HandlerInput<"globalDictionary/remove">>;
 
 type StreamHandlerDefinitions = {
   "ai/streamChat": {
