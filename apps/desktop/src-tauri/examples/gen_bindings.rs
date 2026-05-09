@@ -111,6 +111,9 @@ fn main() {
         auth_sign_out,
         auth_is_signed_in,
         return_to_shell,
+        floating_window_create,
+        floating_window_destroy,
+        floating_window_list,
     ]);
 
     let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));

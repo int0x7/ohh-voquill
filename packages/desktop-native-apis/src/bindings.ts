@@ -824,6 +824,38 @@ async returnToShell() : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Opens a draggable, always-on-top webview window pointed at the given URL
+ * and returns a stable id that can be used to destroy it later. The window
+ * renders any URL the platform webview can load (the same set the main
+ * window can load). The window is independent of the main app window — it
+ * will not be backgrounded behind other windows because of the always-on-top
+ * flag.
+ */
+async floatingWindowCreate(args: CreateFloatingWindowArgs) : Promise<Result<FloatingWindowInfo, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("floating_window_create", { args }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async floatingWindowDestroy(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("floating_window_destroy", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async floatingWindowList() : Promise<Result<FloatingWindowInfo[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("floating_window_list") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -903,6 +935,7 @@ export type AudioClip = "start_recording_clip" | "stop_recording_clip" | "alert_
 export type ChatMessage = { id: string; conversationId: string; role: string; content: string; createdAt: number; metadata: string | null }
 export type CompositorBinding = { actionName: string; keys: string[] }
 export type Conversation = { id: string; title: string; createdAt: number; updatedAt: number }
+export type CreateFloatingWindowArgs = { url: string; title: string | null; width: number | null; height: number | null; minWidth: number | null; minHeight: number | null; x: number | null; y: number | null; decorations: boolean | null; transparent: boolean | null; resizable: boolean | null; focused: boolean | null }
 export type CurrentAppInfoResponse = { appName: string; iconBase64: string }
 export type ElementFingerprint = { automationId: string | null; className: string | null; controlType: number; name: string | null; frameworkId: string | null; childIndex: number; 
 /**
@@ -936,6 +969,7 @@ axIdentifier?: string | null;
 details?: string | null }
 export type FieldValueRequest = { appPid: number; elementIndexPath: number[]; fingerprintChain: ElementFingerprint[] | null; backend?: string | null; jabStringPath?: JabElementId[] | null }
 export type FieldValueResult = { value: string | null; error: string | null }
+export type FloatingWindowInfo = { id: string; url: string; title: string }
 export type GoogleAuthEventPayload = { idToken: string; accessToken: string; refreshToken: string | null; expiresIn: number; tokenType: string; user: GoogleUserInfo }
 export type GoogleUserInfo = { sub: string; email: string | null; name: string | null; picture: string | null }
 export type GpuAdapterInfo = { name: string; vendor: number; device: number; deviceType: string; backend: string }

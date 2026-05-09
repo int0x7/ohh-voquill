@@ -155,6 +155,7 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             app.manage(crate::state::GoogleOAuthState::from_env());
             app.manage(crate::state::OverlayState::new());
             app.manage(crate::state::RemoteReceiverState::new());
+            app.manage(crate::state::FloatingWindowState::new());
 
             match crate::system::auth_session::AuthSession::new(app.handle()) {
                 Ok(session) => {
@@ -327,6 +328,9 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             crate::commands::auth_sign_out,
             crate::commands::auth_is_signed_in,
             crate::commands::return_to_shell,
+            crate::commands::floating_window_create,
+            crate::commands::floating_window_destroy,
+            crate::commands::floating_window_list,
         ])
 }
 

@@ -2309,3 +2309,114 @@ pub async fn auth_is_signed_in(
         .await
         .map_err(|err| err.to_user_string())
 }
+
+#[derive(serde::Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateFloatingWindowArgs {
+    pub url: String,
+    pub title: Option<String>,
+    pub width: Option<f64>,
+    pub height: Option<f64>,
+    pub min_width: Option<f64>,
+    pub min_height: Option<f64>,
+    pub x: Option<f64>,
+    pub y: Option<f64>,
+    pub decorations: Option<bool>,
+    pub transparent: Option<bool>,
+    pub resizable: Option<bool>,
+    pub focused: Option<bool>,
+}
+
+#[derive(serde::Serialize, specta::Type, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FloatingWindowInfo {
+    pub id: String,
+    pub url: String,
+    pub title: String,
+}
+
+/// Opens a draggable, always-on-top webview window pointed at the given URL
+/// and returns a stable id that can be used to destroy it later. The window
+/// renders any URL the platform webview can load (the same set the main
+/// window can load). The window is independent of the main app window — it
+/// will not be backgrounded behind other windows because of the always-on-top
+/// flag.
+#[tauri::command]
+#[specta::specta]
+pub async fn floating_window_create(
+    args: CreateFloatingWindowArgs,
+    app: AppHandle,
+    state: State<'_, crate::state::FloatingWindowState>,
+) -> Result<FloatingWindowInfo, String> {
+    let parsed_url = url::Url::parse(&args.url).map_err(|err| err.to_string())?;
+    let label = state.next_label();
+    let title = args.title.clone().unwrap_or_else(|| "Voquill".to_string());
+
+    let mut builder = tauri::WebviewWindowBuilder::new(
+        &app,
+        label.clone(),
+        tauri::WebviewUrl::External(parsed_url),
+    )
+    .title(title.clone())
+    .always_on_top(true)
+    .skip_taskbar(true)
+    .decorations(args.decorations.unwrap_or(true))
+    .resizable(args.resizable.unwrap_or(true))
+    .focused(args.focused.unwrap_or(false));
+
+    if args.transparent.unwrap_or(false) {
+        builder = builder.transparent(true);
+    }
+
+    if let (Some(w), Some(h)) = (args.width, args.height) {
+        builder = builder.inner_size(w, h);
+    }
+    if let (Some(min_w), Some(min_h)) = (args.min_width, args.min_height) {
+        builder = builder.min_inner_size(min_w, min_h);
+    }
+    if let (Some(x), Some(y)) = (args.x, args.y) {
+        builder = builder.position(x, y);
+    }
+
+    builder.build().map_err(|err| err.to_string())?;
+
+    Ok(FloatingWindowInfo {
+        id: label,
+        url: args.url,
+        title,
+    })
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn floating_window_destroy(id: String, app: AppHandle) -> Result<(), String> {
+    if !id.starts_with(crate::state::FLOATING_WINDOW_LABEL_PREFIX) {
+        return Err(format!("invalid floating window id: {id}"));
+    }
+    match app.get_webview_window(&id) {
+        Some(window) => window.close().map_err(|err| err.to_string()),
+        None => Ok(()),
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn floating_window_list(app: AppHandle) -> Result<Vec<FloatingWindowInfo>, String> {
+    let mut out = Vec::new();
+    for (label, window) in app.webview_windows() {
+        if !label.starts_with(crate::state::FLOATING_WINDOW_LABEL_PREFIX) {
+            continue;
+        }
+        let title = window.title().unwrap_or_default();
+        let url = window
+            .url()
+            .map(|u| u.to_string())
+            .unwrap_or_else(|_| String::new());
+        out.push(FloatingWindowInfo {
+            id: label,
+            url,
+            title,
+        });
+    }
+    Ok(out)
+}
