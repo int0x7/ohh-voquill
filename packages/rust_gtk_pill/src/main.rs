@@ -1,5 +1,6 @@
 mod constants;
 mod draw;
+mod custom_anim;
 mod input;
 mod ipc;
 mod pill;

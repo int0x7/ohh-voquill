@@ -93,22 +93,34 @@ fn draw_pill(cr: &cairo::Context, state: &PillState, ww: f64, wh: f64) {
         return;
     }
 
-    rounded_rect(cr, rx, ry, pill_w, pill_h, radius);
-    cr.set_source_rgba(0.0, 0.0, 0.0, bg_alpha);
-    let _ = cr.fill();
+    // With a custom sprite animation the capsule is hidden while active so
+    // the sprite floats on its own; the collapsed idle dot still shows.
+    let hide_capsule = expand_t > 0.1
+        && matches!(state.phase.get(), Phase::Recording | Phase::Loading)
+        && crate::custom_anim::has_recording_frames();
 
-    rounded_rect(cr, rx + 0.5, ry + 0.5, pill_w - 1.0, pill_h - 1.0, radius - 0.5);
-    cr.set_source_rgba(1.0, 1.0, 1.0, BORDER_ALPHA);
-    cr.set_line_width(1.0);
-    let _ = cr.stroke();
+    if !hide_capsule {
+        rounded_rect(cr, rx, ry, pill_w, pill_h, radius);
+        cr.set_source_rgba(0.0, 0.0, 0.0, bg_alpha);
+        let _ = cr.fill();
+
+        rounded_rect(cr, rx + 0.5, ry + 0.5, pill_w - 1.0, pill_h - 1.0, radius - 0.5);
+        cr.set_source_rgba(1.0, 1.0, 1.0, BORDER_ALPHA);
+        cr.set_line_width(1.0);
+        let _ = cr.stroke();
+    }
 
     match state.phase.get() {
         Phase::Recording if expand_t > 0.1 => {
-            draw_waveform(cr, rx, ry, pill_w, pill_h, expand_t, state);
-            draw_edge_gradient(cr, rx, ry, pill_w, pill_h, radius, expand_t);
+            if !crate::custom_anim::draw_custom_anim(cr, rx, ry, pill_w, pill_h, expand_t, state) {
+                draw_waveform(cr, rx, ry, pill_w, pill_h, expand_t, state);
+                draw_edge_gradient(cr, rx, ry, pill_w, pill_h, radius, expand_t);
+            }
         }
         Phase::Loading if expand_t > 0.1 => {
-            draw_loading(cr, rx, ry, pill_w, pill_h, radius, expand_t, state);
+            if !crate::custom_anim::draw_loading_anim(cr, rx, ry, pill_w, pill_h, expand_t) {
+                draw_loading(cr, rx, ry, pill_w, pill_h, radius, expand_t, state);
+            }
         }
         Phase::Idle if expand_t > 0.5 && (state.hovered.get() || state.assistant_active.get()) => {
             draw_idle_label(cr, rx, ry, pill_w, pill_h, expand_t);
@@ -1204,7 +1216,7 @@ fn wrap_text(cr: &cairo::Context, text: &str, max_width: f64) -> Vec<String> {
 
 // ── Utility ───────────────────────────────────────────────────────
 
-fn rounded_rect(cr: &cairo::Context, x: f64, y: f64, w: f64, h: f64, r: f64) {
+pub(crate) fn rounded_rect(cr: &cairo::Context, x: f64, y: f64, w: f64, h: f64, r: f64) {
     let r = r.min(w / 2.0).min(h / 2.0);
     cr.new_sub_path();
     cr.arc(x + w - r, y + r, r, -PI / 2.0, 0.0);
