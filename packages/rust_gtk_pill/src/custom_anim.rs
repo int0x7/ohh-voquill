@@ -13,8 +13,12 @@ use gtk::gdk_pixbuf::Pixbuf;
 
 use crate::state::PillState;
 
-const RECORDING_DIR: &str = ".config/voquill-pill/frames";
-const LOADING_DIR: &str = ".config/voquill-pill/frames-loading";
+const RECORDING_DIR: &str = "frames";
+const LOADING_DIR: &str = "frames-loading";
+// Per-user dir (under $HOME) takes priority; the system dir ships defaults
+// inside the package so a fresh install works without manual setup.
+const USER_BASE: &str = ".config/voquill-pill";
+const SYSTEM_BASE: &str = "/usr/lib/voquill-desktop/resources/pill-assets";
 // Frames advanced per 16ms draw tick: idle crawl .. full-voice dance.
 const SPEED_MIN: f64 = 0.12;
 const SPEED_MAX: f64 = 1.0;
@@ -33,11 +37,7 @@ thread_local! {
     static BREATH_PHASE: Cell<f64> = const { Cell::new(0.0) };
 }
 
-fn load_frames(dir: &str) -> Vec<Pixbuf> {
-    let Some(home) = std::env::var_os("HOME") else {
-        return Vec::new();
-    };
-    let dir = std::path::Path::new(&home).join(dir);
+fn load_frames_from(dir: std::path::PathBuf) -> Vec<Pixbuf> {
     let Ok(entries) = std::fs::read_dir(&dir) else {
         return Vec::new();
     };
@@ -55,6 +55,16 @@ fn load_frames(dir: &str) -> Vec<Pixbuf> {
         .iter()
         .filter_map(|p| Pixbuf::from_file(p).ok())
         .collect()
+}
+
+fn load_frames(dir: &str) -> Vec<Pixbuf> {
+    if let Some(home) = std::env::var_os("HOME") {
+        let user = load_frames_from(std::path::Path::new(&home).join(USER_BASE).join(dir));
+        if !user.is_empty() {
+            return user;
+        }
+    }
+    load_frames_from(std::path::Path::new(SYSTEM_BASE).join(dir))
 }
 
 fn with_rec<R>(f: impl FnOnce(&Vec<Pixbuf>) -> R) -> R {
