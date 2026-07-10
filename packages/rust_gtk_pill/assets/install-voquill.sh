@@ -36,7 +36,7 @@ fi
 
 echo
 echo "选择录音悬浮窗动画主题:"
-echo "  0) 默认（deb 内置：跳舞杰瑞 / 躺汤姆，不写用户配置）"
+echo "  0) 默认（deb 内置，同 style3：跳舞杰瑞 / 躺汤姆，不写用户配置）"
 i=1
 for s in "${styles[@]}"; do
     case "$s" in
