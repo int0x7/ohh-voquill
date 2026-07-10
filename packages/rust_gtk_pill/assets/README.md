@@ -16,8 +16,10 @@ pill 进程启动时从 `~/.config/voquill-pill/` 加载，用户目录为空时
 deb 内置的 `/usr/lib/voquill-desktop/resources/pill-assets/`（见 `src/custom_anim.rs`）。
 
 ```bash
+./install-voquill.sh <deb路径>     # 安装 Voquill deb + 交互式选择主题（新机器一步到位）
+./install-voquill.sh --theme-only  # 跳过安装，只交互选择主题
 ./apply.sh            # 列出可用主题
-./apply.sh style2     # 切换主题（拷贝帧 + 自动重启 Voquill）
+./apply.sh style2     # 直接切换主题（拷贝帧 + 自动重启 Voquill）
 ```
 
 或手动安装默认素材：
