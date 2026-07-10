@@ -261,15 +261,19 @@ export const syncHotkeyCombosToNative = async (): Promise<void> => {
 
     if (
       isCompositorTriggerAction(actionName) &&
-      isActionGrabbable(state, actionName) &&
-      actionCombos.length > 0 &&
-      actionCombos[0].length > 0 &&
-      !isModifierOnlyCombo(actionCombos[0])
+      isActionGrabbable(state, actionName)
     ) {
-      compositorBindings.push({
-        actionName,
-        keys: actionCombos[0],
-      });
+      // Push every usable combo, not just the first one; the native side
+      // assigns an indexed shortcut slot per combo so they don't overwrite
+      // each other (modifier-only combos can't be compositor shortcuts).
+      for (const combo of actionCombos) {
+        if (combo.length > 0 && !isModifierOnlyCombo(combo)) {
+          compositorBindings.push({
+            actionName,
+            keys: combo,
+          });
+        }
+      }
     }
   }
 

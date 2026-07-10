@@ -357,7 +357,7 @@ fn sync_gnome(script_path: &Path, bindings: &[CompositorBinding]) -> Result<(), 
 
     let mut new_paths = user_paths;
     let mut synced = 0;
-    for binding in bindings {
+    for (idx, binding) in bindings.iter().enumerate() {
         if binding.keys.is_empty() {
             continue;
         }
@@ -368,8 +368,11 @@ fn sync_gnome(script_path: &Path, bindings: &[CompositorBinding]) -> Result<(), 
             );
             continue;
         }
+        // Indexed path so multiple bindings of the same action get their own
+        // slot instead of overwriting each other (stale slots are removed by
+        // the VOQUILL_KEYBINDING_TAG filter above on every sync).
         let dconf_path = format!(
-            "{GNOME_CUSTOM_PREFIX}/{VOQUILL_KEYBINDING_TAG}{}/",
+            "{GNOME_CUSTOM_PREFIX}/{VOQUILL_KEYBINDING_TAG}{}-{idx}/",
             sanitize_action_for_path(&binding.action_name)
         );
         let gnome_binding = keys_to_gnome_binding(&binding.keys);
